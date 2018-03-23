@@ -69,7 +69,9 @@ export class Store {
     const { path, type, payload } = action;
     switch(type) {
       case 'add':
-        return this.afs.collection(path).add(payload);
+        // hack until AF publishes w/ `-types` packages
+        return this.afs.collection(path)
+          .add(payload) as Promise<DocumentReference>;
       case 'update':
         return this.afs.doc(path).update(payload);
       case 'set':
