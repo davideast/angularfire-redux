@@ -49,8 +49,7 @@ export class AppComponent implements OnInit {
 
   delete(item: Item) {
     this.store
-        .path(`items/${item.id}`)
-        .dispatch({ type: 'delete' });
+        .dispatch({ path: `items/${item.id}`, type: 'delete' });
   }
 
 }

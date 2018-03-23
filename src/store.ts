@@ -1,5 +1,4 @@
 import { Action } from './interfaces';
-import { Dispatcher } from './dispatcher';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -66,12 +65,17 @@ export class Store {
     );
   }
 
-  path(value: string) {
-    return new Dispatcher(value, this.afs);
+  dispatch(action: Action) {
+    const { path, type, payload } = action;
+    switch(type) {
+      case 'add':
+        return this.afs.collection(path).add(payload);
+      case 'update':
+        return this.afs.doc(path).update(payload);
+      case 'set':
+        return this.afs.doc(path).set(payload);
+      case 'delete':
+        return this.afs.doc(path).delete();
+    }
   }
-
-  ref(firestoreRef: DocumentReference | CollectionReference) {
-    return new Dispatcher(firestoreRef.path, this.afs);
-  }
-
 }
