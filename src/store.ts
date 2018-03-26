@@ -1,7 +1,8 @@
 import { Action } from './interfaces';
+import { Actions } from './actions';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { 
   CollectionReference,
   DocumentReference,
@@ -12,11 +13,15 @@ import {
   AngularFirestoreCollection, 
   AngularFirestoreDocument 
 } from 'angularfire2/firestore';
+import { combineLatest } from 'rxjs/observable/combineLatest';
 
 @Injectable()
 export class Store {
 
-  constructor(private afs: AngularFirestore) { }
+  constructor(
+    private afs: AngularFirestore,
+    private actions$: Actions,
+  ) { }
 
   selectCol(
     path: string,
@@ -28,7 +33,7 @@ export class Store {
     ) => Observable<any>
   ): Observable<any> { 
     const collection = this.afs.collection<any>(path, queryCb);
-    const obs$ = collection.snapshotChanges().pipe(
+    const snapChanges$ = collection.snapshotChanges().pipe(
       map(actions => {
         return actions.map(action => {
           const { type, payload } = action;
@@ -36,14 +41,18 @@ export class Store {
           const id = payload.doc.id;
           return { id, type, ...data };
         });
-      })
+      }),
+      tap(payload => {
+        const type = `${path}_value`.toUpperCase();
+        this.actions$.next({ type, payload });
+      }),
     );
 
     if (typeof selectorCb === 'function') {
-      return selectorCb(obs$, collection, this.afs);
+      return selectorCb(snapChanges$, collection, this.afs);
     }
 
-    return obs$;
+    return snapChanges$;
   }
 
   selectDoc(

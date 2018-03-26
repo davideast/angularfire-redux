@@ -1,6 +1,5 @@
-import { Action } from './interfaces';
-import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Injectable, OnDestroy } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
 import { 
   CollectionReference,
   DocumentReference,
@@ -12,20 +11,37 @@ import {
   AngularFirestoreDocument 
 } from 'angularfire2/firestore';
 
-export class ActionsCol extends Observable<Action> {
+export const INIT = 'angularfire-redux/init' as 'angularfire-redux/init';
 
-  constructor(private path: string, private afs: AngularFirestore) {
-    super();
-    this.source = afs.collection(path).stateChanges();
-  }
-
+export interface Action {
+  type: string;
+  payload?: any;
 }
 
-export class ActionsDoc extends Observable<Action> {
+@Injectable()
+export class Actions extends BehaviorSubject<any> 
+  implements OnDestroy {
 
-  constructor(private path: string, private afs: AngularFirestore) {
-    super();
-    this.source = afs.doc(path).snapshotChanges();
+  constructor() {
+    super({ INIT });
+  }
+
+  next(action: Action): void {
+    if (typeof action === 'undefined') {
+      throw new TypeError(`Actions must be objects`);
+    } else if (typeof action.type === 'undefined') {
+      throw new TypeError(`Actions must have a type property`);
+    }
+
+    super.next(action);
+  }
+
+  complete() {
+    /* noop */
+  }
+
+  ngOnDestroy() {
+    super.complete();
   }
 
 }
